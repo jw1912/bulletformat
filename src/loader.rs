@@ -1,14 +1,19 @@
-use std::{fs::File, io::{self, BufRead, BufReader}, path::Path, marker::PhantomData};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+    marker::PhantomData,
+    path::Path,
+};
 
-use crate::{BulletFormat, util};
+use crate::util;
 
-pub struct BulletFormatLoader<T: BulletFormat> {
+pub struct DataLoader<T> {
     file: File,
     buffer_size: usize,
     marker: PhantomData<T>,
 }
 
-impl< T: BulletFormat> BulletFormatLoader<T> {
+impl<T> DataLoader<T> {
     const DATA_SIZE: usize = std::mem::size_of::<T>();
 
     pub fn new(path: impl AsRef<Path>, buffer_size_mb: usize) -> io::Result<Self> {
@@ -31,9 +36,9 @@ impl< T: BulletFormat> BulletFormatLoader<T> {
         let batches_per_load = self.buffer_size / Self::DATA_SIZE / batch_size;
         let cap = Self::DATA_SIZE * batch_size * batches_per_load;
 
-        let mut loaded = BufReader::with_capacity(cap, self.file);
+        let mut reader = BufReader::with_capacity(cap, self.file);
 
-        while let Ok(buf) = loaded.fill_buf() {
+        while let Ok(buf) = reader.fill_buf() {
             if buf.is_empty() {
                 break;
             }
@@ -45,7 +50,7 @@ impl< T: BulletFormat> BulletFormatLoader<T> {
             }
 
             let consumed = buf.len();
-            loaded.consume(consumed);
+            reader.consume(consumed);
         }
     }
 }

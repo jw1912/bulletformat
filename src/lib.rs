@@ -3,11 +3,15 @@ mod chess;
 mod loader;
 mod util;
 
-use std::{fs::File, io::{self, BufWriter, Write}, marker::Sized};
+use std::{
+    fs::File,
+    io::{self, BufWriter, Write},
+    marker::Sized,
+};
 
 pub use ataxx::AtaxxBoard;
 pub use chess::ChessBoard;
-pub use loader::BulletFormatLoader;
+pub use loader::DataLoader;
 
 pub trait BulletFormat: IntoIterator + Sized {
     type FeatureType;

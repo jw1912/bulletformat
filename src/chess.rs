@@ -154,8 +154,10 @@ impl ChessBoard {
 
         Ok(board)
     }
+}
 
-    pub fn from_marlinformat(mf: &MarlinFormat) -> Self {
+impl From<MarlinFormat> for ChessBoard {
+    fn from(mf: MarlinFormat) -> Self {
         let mut board = Self::default();
 
         let stm = usize::from(mf.stm_enp >> 7);
@@ -203,7 +205,6 @@ impl ChessBoard {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
 pub struct MarlinFormat {
     occ: u64,
     pcs: [u8; 16],

@@ -12,7 +12,5 @@ pub fn to_slice_with_lifetime<T, U>(slice: &[T]) -> &[U] {
     );
 
     let len = src_size / tgt_size;
-    unsafe {
-        std::slice::from_raw_parts(slice.as_ptr().cast(), len)
-    }
+    unsafe { std::slice::from_raw_parts(slice.as_ptr().cast(), len) }
 }
