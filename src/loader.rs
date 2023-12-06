@@ -32,7 +32,7 @@ impl<T> DataLoader<T> {
         self.len() == 0
     }
 
-    pub fn map_batches<F: Fn(&[T])>(self, batch_size: usize, f: F) {
+    pub fn map_batches<F: FnMut(&[T])>(self, batch_size: usize, mut f: F) {
         let batches_per_load = self.buffer_size / Self::DATA_SIZE / batch_size;
         let cap = Self::DATA_SIZE * batch_size * batches_per_load;
 
@@ -52,5 +52,18 @@ impl<T> DataLoader<T> {
             let consumed = buf.len();
             reader.consume(consumed);
         }
+    }
+
+    pub fn max_batch_size(&self) -> usize {
+        self.buffer_size / Self::DATA_SIZE
+    }
+
+    pub fn map_positions<F: Fn(&T)>(self, f: F) {
+        let batch_size = self.max_batch_size();
+        self.map_batches(batch_size, |batch| {
+            for pos in batch {
+                f(pos);
+            }
+        });
     }
 }

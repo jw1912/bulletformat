@@ -1,5 +1,6 @@
 mod ataxx;
 mod chess;
+mod convert;
 mod loader;
 mod util;
 
@@ -11,6 +12,7 @@ use std::{
 
 pub use ataxx::AtaxxBoard;
 pub use chess::ChessBoard;
+pub use convert::convert;
 pub use loader::DataLoader;
 
 pub trait BulletFormat: IntoIterator + Sized {
