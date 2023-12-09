@@ -14,7 +14,7 @@ pub struct ChessBoard {
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
 
 impl BulletFormat for ChessBoard {
-    type FeatureType = (u8, u8);
+    type FeatureType = (u8, u8, u8, u8);
     const INPUTS: usize = 768;
     const MAX_FEATURES: usize = 32;
 
