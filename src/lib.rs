@@ -1,5 +1,5 @@
 mod ataxx;
-mod chess;
+pub mod chess;
 mod convert;
 mod loader;
 mod util;
