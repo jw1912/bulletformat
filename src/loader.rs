@@ -58,12 +58,46 @@ impl<T> DataLoader<T> {
         self.buffer_size / Self::DATA_SIZE
     }
 
-    pub fn map_positions<F: Fn(&T)>(self, f: F) {
+    pub fn map_positions<F: FnMut(&T)>(self, mut f: F) {
         let batch_size = self.max_batch_size();
         self.map_batches(batch_size, |batch| {
             for pos in batch {
                 f(pos);
             }
         });
+    }
+
+    pub fn map_batches_threaded_loading<F: FnMut(&[T])>(self, batch_size: usize, mut f: F) {
+        use std::sync::mpsc::sync_channel;
+
+        let batches_per_load = self.buffer_size / Self::DATA_SIZE / batch_size;
+        let cap = Self::DATA_SIZE * batch_size * batches_per_load;
+
+        let (sender, reciever) = sync_channel::<Vec<u8>>(2);
+
+        let dataloader = std::thread::spawn(move || {
+            let mut file = BufReader::with_capacity(cap, self.file);
+            while let Ok(buf) = file.fill_buf() {
+                if buf.is_empty() {
+                    break;
+                }
+
+                // do this better
+                sender.send(buf.to_vec()).unwrap();
+
+                let consumed = buf.len();
+                file.consume(consumed);
+            }
+        });
+
+        while let Ok(buf) = reciever.recv() {
+            let data = util::to_slice_with_lifetime(&buf);
+
+            for batch in data.chunks(batch_size) {
+                f(batch);
+            }
+        }
+
+        dataloader.join().unwrap();
     }
 }

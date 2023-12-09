@@ -1,12 +1,52 @@
-use std::{path::Path, io::{self, BufWriter, Write}, fs::File};
+use std::{
+    fs::File,
+    io::{self, BufWriter, Write, BufReader, BufRead},
+    path::Path,
+    str::FromStr,
+};
 
-use crate::{DataLoader, BulletFormat};
+use crate::{BulletFormat, DataLoader};
 
-pub fn convert<T: Copy + Send + Sync, U: BulletFormat + From<T> + Send>(
+pub fn convert_from_text<U>(
+    inp_path: impl AsRef<Path>,
+    out_path: impl AsRef<Path>,
+) -> io::Result<()>
+where U: BulletFormat + FromStr<Err = String> + Send
+{
+    let loader = BufReader::new(File::open(inp_path).unwrap());
+    let mut output = BufWriter::new(File::create(out_path)?);
+    let mut buffer = Vec::new();
+
+    for (i, line) in loader.lines().map(Result::unwrap).enumerate() {
+        match line.parse::<U>() {
+            Ok(position) => buffer.push(position),
+            Err(error) => {
+                println!("Error Parsing Line {}: {line}", i + 1);
+                println!("Error Type: {error}");
+            },
+        }
+
+        if buffer.len() % 16_384 == 0 {
+            BulletFormat::write_to_bin(&mut output, &buffer).unwrap();
+            buffer.clear();
+        }
+    }
+
+    BulletFormat::write_to_bin(&mut output, &buffer).unwrap();
+    buffer.clear();
+
+    Ok(())
+}
+
+pub fn convert_from_bin<T, U>(
     inp_path: impl AsRef<Path>,
     out_path: impl AsRef<Path>,
     threads: usize,
-) -> io::Result<()> {
+) -> io::Result<()>
+where
+    T: Copy + Send + Sync,
+    U: BulletFormat + From<T> + Send,
+{
     let loader = DataLoader::<T>::new(inp_path, 512)?;
     let to_convert = loader.len();
     let mut output = BufWriter::new(File::create(out_path)?);

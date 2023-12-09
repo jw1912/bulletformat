@@ -12,7 +12,7 @@ use std::{
 
 pub use ataxx::AtaxxBoard;
 pub use chess::ChessBoard;
-pub use convert::convert;
+pub use convert::{convert_from_bin, convert_from_text};
 pub use loader::DataLoader;
 
 pub trait BulletFormat: IntoIterator + Sized {

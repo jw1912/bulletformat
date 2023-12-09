@@ -64,9 +64,11 @@ impl Iterator for BoardIter {
     }
 }
 
-impl ChessBoard {
-    pub fn from_epd(epd: &str) -> Result<Self, String> {
-        let split: Vec<_> = epd.split('|').collect();
+impl std::str::FromStr for ChessBoard {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, String> {
+        let split: Vec<_> = s.split('|').collect();
 
         let fen = split[0];
         let score = split[1].trim();
@@ -109,7 +111,7 @@ impl ChessBoard {
                     board.occ |= 1 << square;
 
                     if idx >= 32 {
-                        return Err(epd);
+                        return Err(s);
                     }
 
                     board.pcs[idx / 2] |= (piece as u8) << (4 * (idx & 1));
@@ -133,7 +135,7 @@ impl ChessBoard {
         board.score = if let Ok(x) = score.parse::<i16>() {
             x
         } else {
-            println!("{epd}");
+            println!("{s}");
             return Err(String::from("Bad score!"));
         };
 
@@ -142,7 +144,7 @@ impl ChessBoard {
             "0.5" | "[0.5]" | "1/2" => 1,
             "0.0" | "[0.0]" | "0" => 0,
             _ => {
-                println!("{epd}");
+                println!("{s}");
                 return Err(String::from("Bad game result!"));
             }
         };
