@@ -207,6 +207,7 @@ impl From<MarlinFormat> for ChessBoard {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct MarlinFormat {
     occ: u64,
     pcs: [u8; 16],
