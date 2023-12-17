@@ -64,6 +64,62 @@ impl Iterator for BoardIter {
     }
 }
 
+impl ChessBoard {
+    /// - Bitboards are in order White, Black, Pawn, Knight, Bishop, Rook, Queen, King.
+    /// - Side-to-move is 0 for White, 1 for Black.
+    /// - Score is White relative, in Centipawns.
+    /// - Result is 0.0 for White Win, 0.5 for Draw, 1.0 for Black Win
+    pub fn from_raw(mut bbs: [u64; 8], stm: usize, mut score: i16, mut result: f32) -> Result<Self, String> {
+        if stm == 1 {
+            for bb in bbs.iter_mut() {
+                *bb = bb.swap_bytes();
+            }
+
+            bbs.swap(0, 1);
+
+            score = -score;
+            result = 1.0 - result;
+        }
+
+        let occ = bbs[0] | bbs[1];
+        let mut pcs = [0; 16];
+
+        let mut idx = 0;
+        let mut occ2 = occ;
+        while occ2 > 0 {
+            let sq = occ2.trailing_zeros();
+            let bit = 1 << sq;
+            occ2 &= occ2 - 1;
+
+            let colour = u8::from((bit & bbs[1]) > 0) << 3;
+            let piece = bbs
+                .iter()
+                .skip(2)
+                .position(|bb| bit & bb > 0)
+                .ok_or("No Piece Found!".to_string())?;
+
+            let pc = colour | piece as u8;
+
+            pcs[idx / 2] |= pc << (4 * (idx & 1));
+
+            idx += 1;
+        }
+
+        let result = (2.0 * result) as u8;
+        let ksq = (bbs[0] & bbs[7]).trailing_zeros() as u8;
+        let opp_ksq = (bbs[1] & bbs[7]).trailing_zeros() as u8 ^ 56;
+
+        Ok(Self {
+            occ,
+            pcs,
+            score,
+            result,
+            ksq,
+            opp_ksq,
+        })
+    }
+}
+
 impl std::str::FromStr for ChessBoard {
     type Err = String;
 
