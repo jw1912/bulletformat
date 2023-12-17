@@ -30,6 +30,10 @@ pub trait BulletFormat: IntoIterator + Sized {
         blend * self.result() + (1. - blend) * util::sigmoid(f32::from(self.score()), scale)
     }
 
+    fn as_bytes_slice(data: &[Self]) -> &[u8] {
+        util::to_slice_with_lifetime(data)
+    }
+
     fn write_to_bin(output: &mut BufWriter<File>, data: &[Self]) -> io::Result<()> {
         let data_slice = util::to_slice_with_lifetime(data);
         output.write_all(data_slice)?;
