@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, BufWriter, Write, BufReader, BufRead},
+    io::{self, BufRead, BufReader, BufWriter, Write},
     path::Path,
     str::FromStr,
 };
@@ -11,7 +11,8 @@ pub fn convert_from_text<U>(
     inp_path: impl AsRef<Path>,
     out_path: impl AsRef<Path>,
 ) -> io::Result<()>
-where U: BulletFormat + FromStr<Err = String> + Send
+where
+    U: BulletFormat + FromStr<Err = String> + Send,
 {
     let loader = BufReader::new(File::open(inp_path).unwrap());
     let mut output = BufWriter::new(File::create(out_path)?);
@@ -24,7 +25,7 @@ where U: BulletFormat + FromStr<Err = String> + Send
             Err(error) => {
                 println!("Error Parsing Line {}: {line}", i + 1);
                 println!("Error Type: {error}");
-            },
+            }
         }
 
         if buffer.len() % 16_384 == 0 {

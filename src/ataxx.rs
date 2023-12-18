@@ -14,6 +14,50 @@ pub struct AtaxxBoard {
 
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<AtaxxBoard>() == 32);
 
+impl AtaxxBoard {
+    pub fn stm(&self) -> usize {
+        usize::from(self.stm)
+    }
+
+    pub fn halfm(&self) -> u8 {
+        self.halfm
+    }
+
+    pub fn fullm(&self) -> u16 {
+        self.fullm
+    }
+
+    /// - Bitboards are in order Red, Blue, Gaps.
+    /// - Side-to-move is false for Red, true for Blue.
+    /// - Score is Red relative.
+    /// - Result is 0.0 for Blue Win, 0.5 for Draw, 1.0 for Red Win
+    pub fn from_raw(
+        mut bbs: [u64; 3],
+        mut score: i16,
+        result: f32,
+        stm: bool,
+        fullm: u16,
+        halfm: u8,
+    ) -> Self {
+        let mut result = (2.0 * result) as u8;
+        if stm {
+            bbs.swap(0, 1);
+            score = -score;
+            result = 2 - result;
+        }
+
+        Self {
+            bbs,
+            score,
+            result,
+            stm,
+            fullm,
+            halfm,
+            extra: 0,
+        }
+    }
+}
+
 impl BulletFormat for AtaxxBoard {
     type FeatureType = (u8, u8);
     const INPUTS: usize = 147;
@@ -80,7 +124,10 @@ impl std::str::FromStr for AtaxxBoard {
 
         let stm = stm_str == "b";
 
-        let mut board = Self {stm, ..Default::default()};
+        let mut board = Self {
+            stm,
+            ..Default::default()
+        };
         board.halfm = parts.get(2).unwrap_or(&"0").parse().unwrap_or(0);
         board.fullm = parts.get(3).unwrap_or(&"1").parse().unwrap_or(1);
 
@@ -93,7 +140,7 @@ impl std::str::FromStr for AtaxxBoard {
                         let bb = usize::from(ch == 'b') + 2 * usize::from(ch == '-');
                         board.bbs[bb] |= 1 << idx;
                         idx += 1;
-                    },
+                    }
                     '1'..='7' => idx += usize::from(ch as u8 - b'1' + 1),
                     _ => return Err("Unrecognised Character {ch}".to_string()),
                 }
@@ -124,20 +171,6 @@ impl std::str::FromStr for AtaxxBoard {
         }
 
         Ok(board)
-    }
-}
-
-impl AtaxxBoard {
-    pub fn stm(&self) -> usize {
-        usize::from(self.stm)
-    }
-
-    pub fn halfm(&self) -> u8 {
-        self.halfm
-    }
-
-    pub fn fullm(&self) -> u16 {
-        self.fullm
     }
 }
 
@@ -207,7 +240,7 @@ mod test {
             "6b/2r4/1rr4/1rb2bb/2bb3/7/5bb r 3 11 | -570 | 0.0",
             "6b/7/5r1/3rrrr/4brr/4bbb/3r1bb b 1 14 | 120 | 0.0",
             "r1rr3/1r1r3/2-b-r1/r1bbrrr/2-b-rr/1bbbbbb/1bbbrbb b 1 30 | -840 | 0.0",
-            ];
+        ];
 
         for fen in fens {
             let board: AtaxxBoard = fen.parse().unwrap();

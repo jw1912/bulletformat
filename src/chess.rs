@@ -68,8 +68,13 @@ impl ChessBoard {
     /// - Bitboards are in order White, Black, Pawn, Knight, Bishop, Rook, Queen, King.
     /// - Side-to-move is 0 for White, 1 for Black.
     /// - Score is White relative, in Centipawns.
-    /// - Result is 0.0 for White Win, 0.5 for Draw, 1.0 for Black Win
-    pub fn from_raw(mut bbs: [u64; 8], stm: usize, mut score: i16, mut result: f32) -> Result<Self, String> {
+    /// - Result is 0.0 for Black Win, 0.5 for Draw, 1.0 for White Win
+    pub fn from_raw(
+        mut bbs: [u64; 8],
+        stm: usize,
+        mut score: i16,
+        mut result: f32,
+    ) -> Result<Self, String> {
         if stm == 1 {
             for bb in bbs.iter_mut() {
                 *bb = bb.swap_bytes();
