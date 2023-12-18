@@ -16,6 +16,7 @@ where U: BulletFormat + FromStr<Err = String> + Send
     let loader = BufReader::new(File::open(inp_path).unwrap());
     let mut output = BufWriter::new(File::create(out_path)?);
     let mut buffer = Vec::new();
+    let mut converted = 0;
 
     for (i, line) in loader.lines().map(Result::unwrap).enumerate() {
         match line.parse::<U>() {
@@ -27,13 +28,21 @@ where U: BulletFormat + FromStr<Err = String> + Send
         }
 
         if buffer.len() % 16_384 == 0 {
+            converted += buffer.len();
             BulletFormat::write_to_bin(&mut output, &buffer).unwrap();
             buffer.clear();
+
+            if converted % (16_384 * 16) == 0 {
+                print!("> Converted {converted}\r");
+            }
         }
     }
 
+    converted += buffer.len();
     BulletFormat::write_to_bin(&mut output, &buffer).unwrap();
     buffer.clear();
+
+    println!("Total Positions: {converted}");
 
     Ok(())
 }
