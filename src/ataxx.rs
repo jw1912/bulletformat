@@ -95,7 +95,7 @@ pub struct AtaxxBoardIter {
 impl Iterator for AtaxxBoardIter {
     type Item = (u8, u8);
     fn next(&mut self) -> Option<Self::Item> {
-        if self.board.bbs[self.stage] == 0 {
+        while self.board.bbs[self.stage] == 0 {
             self.stage += 1;
 
             if self.stage > 2 {
