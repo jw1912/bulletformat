@@ -132,12 +132,12 @@ impl std::str::FromStr for ChessBoard {
         let split: Vec<_> = s.split('|').collect();
 
         let fen = split[0];
-        let score = split[1].trim();
-        let wdl = split[2].trim();
+        let score = split.get(1).ok_or("Malformed!")?.trim();
+        let wdl = split.get(2).ok_or("Malformed!")?.trim();
 
         let parts: Vec<&str> = fen.split_whitespace().collect();
-        let board_str = parts[0];
-        let stm_str = parts[1];
+        let board_str = *parts.first().ok_or("Malformed FEN!")?;
+        let stm_str = *parts.get(1).ok_or("Malformed FEN!")?;
 
         let stm = u8::from(stm_str == "b");
 
