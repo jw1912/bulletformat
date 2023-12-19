@@ -61,7 +61,7 @@ impl AtaxxBoard {
 impl BulletFormat for AtaxxBoard {
     type FeatureType = (u8, u8);
     const INPUTS: usize = 147;
-    const MAX_FEATURES: usize = 98;
+    const MAX_FEATURES: usize = 49;
 
     fn score(&self) -> i16 {
         self.score
@@ -104,6 +104,7 @@ impl Iterator for AtaxxBoardIter {
         }
 
         let sq = self.board.bbs[self.stage].trailing_zeros();
+        self.board.bbs[self.stage] &= self.board.bbs[self.stage] - 1;
         Some((self.stage as u8, sq as u8))
     }
 }
