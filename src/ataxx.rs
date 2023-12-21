@@ -123,7 +123,7 @@ impl std::str::FromStr for AtaxxBoard {
         let board_str = *parts.first().ok_or("Malformed FEN!")?;
         let stm_str = *parts.get(1).ok_or("Malformed FEN!")?;
 
-        let stm = stm_str == "b";
+        let stm = stm_str == "o" || stm_str == "b";
 
         let mut board = Self {
             stm,
@@ -137,8 +137,8 @@ impl std::str::FromStr for AtaxxBoard {
         for row in board_str.split('/').rev() {
             for ch in row.chars() {
                 match ch {
-                    'r' | 'b' | '-' => {
-                        let bb = usize::from(ch == 'b') + 2 * usize::from(ch == '-');
+                    'x'| 'o' | 'r' | 'b' | '-' => {
+                        let bb = usize::from(ch == 'o' || ch == 'b') + 2 * usize::from(ch == '-');
                         board.bbs[bb] |= 1 << idx;
                         idx += 1;
                     }
@@ -205,7 +205,7 @@ impl std::fmt::Display for AtaxxBoard {
                         fen += empty.to_string().as_str();
                         empty = 0;
                     }
-                    fen += [".", "r", "b", "-"][pc];
+                    fen += [".", "x", "o", "-"][pc];
                 }
             }
 
@@ -221,7 +221,7 @@ impl std::fmt::Display for AtaxxBoard {
         write!(
             f,
             "{fen} {} {} {} | {score} | {:.1}",
-            ["r", "b"][self.stm()],
+            ["x", "o"][self.stm()],
             self.halfm,
             self.fullm,
             f32::from(result) / 2.0,
@@ -238,13 +238,36 @@ mod test {
     #[test]
     fn parse() {
         let fens = [
-            "6b/2r4/1rr4/1rb2bb/2bb3/7/5bb r 3 11 | -570 | 0.0",
-            "6b/7/5r1/3rrrr/4brr/4bbb/3r1bb b 1 14 | 120 | 0.0",
-            "r1rr3/1r1r3/2-b-r1/r1bbrrr/2-b-rr/1bbbbbb/1bbbrbb b 1 30 | -840 | 0.0",
+            "6o/2x4/1xx4/1xo2oo/2oo3/7/5oo x 3 11 | -570 | 0.0",
+            "6o/7/5x1/3xxxx/4oxx/4ooo/3x1oo o 1 14 | 120 | 0.0",
+            "x1xx3/1x1x3/2-o-x1/x1ooxxx/2-o-xx/1oooooo/1oooxoo o 1 30 | -840 | 0.0",
         ];
 
         for fen in fens {
             let board: AtaxxBoard = fen.parse().unwrap();
+            assert_eq!(board.to_string(), fen);
+        }
+    }
+
+    #[test]
+    fn alternate() {
+        let fens = [
+            (
+                "6b/2r4/1rr4/1rb2bb/2bb3/7/5bb r 3 11 | -570 | 0.0",
+                "6o/2x4/1xx4/1xo2oo/2oo3/7/5oo x 3 11 | -570 | 0.0",
+            ),
+            (
+                "6b/7/5r1/3rrrr/4brr/4bbb/3r1bb b 1 14 | 120 | 0.0",
+                "6o/7/5x1/3xxxx/4oxx/4ooo/3x1oo o 1 14 | 120 | 0.0",
+            ),
+            (
+                "r1rr3/1r1r3/2-b-r1/r1bbrrr/2-b-rr/1bbbbbb/1bbbrbb b 1 30 | -840 | 0.0",
+                "x1xx3/1x1x3/2-o-x1/x1ooxxx/2-o-xx/1oooooo/1oooxoo o 1 30 | -840 | 0.0",
+            ),
+        ];
+
+        for (alternate, fen) in fens {
+            let board: AtaxxBoard = alternate.parse().unwrap();
             assert_eq!(board.to_string(), fen);
         }
     }
