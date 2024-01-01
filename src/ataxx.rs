@@ -137,7 +137,7 @@ impl std::str::FromStr for AtaxxBoard {
         for row in board_str.split('/').rev() {
             for ch in row.chars() {
                 match ch {
-                    'x'| 'o' | 'r' | 'b' | '-' => {
+                    'x' | 'o' | 'r' | 'b' | '-' => {
                         let bb = usize::from(ch == 'o' || ch == 'b') + 2 * usize::from(ch == '-');
                         board.bbs[bb] |= 1 << idx;
                         idx += 1;
