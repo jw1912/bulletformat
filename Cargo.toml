@@ -1,6 +1,6 @@
 [package]
 name = "bulletformat"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Jamie Whiting"]
 description = "Binary Data Formats, Data Loader and Utilities for bullet."

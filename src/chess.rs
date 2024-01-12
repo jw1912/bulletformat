@@ -14,7 +14,7 @@ pub struct ChessBoard {
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
 
 impl BulletFormat for ChessBoard {
-    type FeatureType = (u8, u8, u8, u8);
+    type FeatureType = (u8, u8);
     const INPUTS: usize = 768;
     const MAX_FEATURES: usize = 32;
 
@@ -32,7 +32,7 @@ impl BulletFormat for ChessBoard {
 }
 
 impl IntoIterator for ChessBoard {
-    type Item = (u8, u8, u8, u8);
+    type Item = (u8, u8);
     type IntoIter = BoardIter;
     fn into_iter(self) -> Self::IntoIter {
         BoardIter {
@@ -48,7 +48,7 @@ pub struct BoardIter {
 }
 
 impl Iterator for BoardIter {
-    type Item = (u8, u8, u8, u8);
+    type Item = (u8, u8);
     fn next(&mut self) -> Option<Self::Item> {
         if self.board.occ == 0 {
             return None;
@@ -60,11 +60,19 @@ impl Iterator for BoardIter {
         self.board.occ &= self.board.occ - 1;
         self.idx += 1;
 
-        Some((piece, square, self.board.ksq, self.board.opp_ksq))
+        Some((piece, square))
     }
 }
 
 impl ChessBoard {
+    pub fn our_ksq(&self) -> u8 {
+        self.ksq
+    }
+
+    pub fn opp_ksq(&self) -> u8 {
+        self.opp_ksq
+    }
+
     /// - Bitboards are in order White, Black, Pawn, Knight, Bishop, Rook, Queen, King.
     /// - Side-to-move is 0 for White, 1 for Black.
     /// - Score is White relative, in Centipawns.
