@@ -15,8 +15,6 @@ const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
 
 impl BulletFormat for ChessBoard {
     type FeatureType = (u8, u8);
-    const INPUTS: usize = 768;
-    const MAX_FEATURES: usize = 32;
 
     fn score(&self) -> i16 {
         self.score
@@ -244,9 +242,7 @@ impl From<MarlinFormat> for ChessBoard {
         let mut features = [(0, 0); 32];
         let mut fidx = 0;
 
-        for (colour, mut piece, mut square) in mf.into_iter() {
-            piece |= colour << 3;
-
+        for (mut piece, mut square) in mf.into_iter() {
             if stm == 1 {
                 piece ^= 8;
                 square ^= 56;
@@ -289,7 +285,7 @@ pub struct MarlinFormat {
 }
 
 impl IntoIterator for MarlinFormat {
-    type Item = (u8, u8, u8);
+    type Item = (u8, u8);
     type IntoIter = MarlinFormatIter;
     fn into_iter(self) -> Self::IntoIter {
         MarlinFormatIter {
@@ -305,7 +301,7 @@ pub struct MarlinFormatIter {
 }
 
 impl Iterator for MarlinFormatIter {
-    type Item = (u8, u8, u8);
+    type Item = (u8, u8);
     fn next(&mut self) -> Option<Self::Item> {
         if self.board.occ == 0 {
             return None;
@@ -324,6 +320,40 @@ impl Iterator for MarlinFormatIter {
         self.board.occ &= self.board.occ - 1;
         self.idx += 1;
 
-        Some((colour, piece, square))
+        Some(((colour << 3) | piece, square))
+    }
+}
+
+impl MarlinFormat {
+    fn is_black_to_move(&self) -> bool {
+        self.stm_enp >> 7 > 0
+    }
+
+    fn res_stm(&self) -> u8 {
+        if self.is_black_to_move() {
+            2 - self.result
+        } else {
+            self.result
+        }
+    }
+}
+
+impl BulletFormat for MarlinFormat {
+    type FeatureType = (u8, u8);
+
+    fn score(&self) -> i16 {
+        if self.is_black_to_move() {
+            -self.score
+        } else {
+            self.score
+        }
+    }
+
+    fn result(&self) -> f32 {
+        f32::from(self.res_stm()) / 2.
+    }
+
+    fn result_idx(&self) -> usize {
+        usize::from(self.res_stm())
     }
 }
