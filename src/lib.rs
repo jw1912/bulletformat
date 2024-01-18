@@ -15,10 +15,8 @@ pub use chess::ChessBoard;
 pub use convert::{convert_from_bin, convert_from_text};
 pub use loader::DataLoader;
 
-pub trait BulletFormat: IntoIterator + Sized {
+pub trait BulletFormat: IntoIterator + Sized + Copy + Send + Sync {
     type FeatureType;
-    const INPUTS: usize;
-    const MAX_FEATURES: usize;
 
     fn score(&self) -> i16;
 

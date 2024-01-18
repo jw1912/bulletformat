@@ -54,8 +54,8 @@ pub fn convert_from_bin<T, U>(
     threads: usize,
 ) -> io::Result<()>
 where
-    T: Copy + Send + Sync,
-    U: BulletFormat + From<T> + Send,
+    T: BulletFormat,
+    U: BulletFormat + From<T>,
 {
     let loader = DataLoader::<T>::new(inp_path, 512)?;
     let to_convert = loader.len();

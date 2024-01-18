@@ -60,8 +60,6 @@ impl AtaxxBoard {
 
 impl BulletFormat for AtaxxBoard {
     type FeatureType = (u8, u8);
-    const INPUTS: usize = 147;
-    const MAX_FEATURES: usize = 49;
 
     fn score(&self) -> i16 {
         self.score
