@@ -63,6 +63,10 @@ impl Iterator for BoardIter {
 }
 
 impl ChessBoard {
+    pub fn occ(&self) -> u64 {
+        self.occ
+    }
+
     pub fn our_ksq(&self) -> u8 {
         self.ksq
     }
@@ -308,23 +312,20 @@ impl Iterator for MarlinFormatIter {
         }
 
         let square = self.board.occ.trailing_zeros() as u8;
-        let coloured_piece = (self.board.pcs[self.idx / 2] >> (4 * (self.idx & 1))) & 0b1111;
-
-        let mut piece = coloured_piece & 0b111;
-        if piece == 6 {
-            piece = 3;
-        }
-
-        let colour = coloured_piece >> 3;
+        let piece = (self.board.pcs[self.idx / 2] >> (4 * (self.idx & 1))) & 0b1111;
 
         self.board.occ &= self.board.occ - 1;
         self.idx += 1;
 
-        Some(((colour << 3) | piece, square))
+        Some((piece, square))
     }
 }
 
 impl MarlinFormat {
+    pub fn occ(&self) -> u64 {
+        self.occ
+    }
+
     fn is_black_to_move(&self) -> bool {
         self.stm_enp >> 7 > 0
     }
