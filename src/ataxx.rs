@@ -15,6 +15,10 @@ pub struct AtaxxBoard {
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<AtaxxBoard>() == 32);
 
 impl AtaxxBoard {
+    pub fn bbs(&self) -> [u64; 3] {
+        self.bbs
+    }
+
     pub fn stm(&self) -> usize {
         usize::from(self.stm)
     }
@@ -25,6 +29,10 @@ impl AtaxxBoard {
 
     pub fn fullm(&self) -> u16 {
         self.fullm
+    }
+
+    pub fn extra(&self) -> u8 {
+        self.extra
     }
 
     /// - Bitboards are in order Red, Blue, Gaps.
