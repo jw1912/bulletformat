@@ -76,6 +76,10 @@ impl ChessBoard {
         self.opp_ksq
     }
 
+    pub fn extra(&self) -> [u8; 3] {
+        self.extra
+    }
+
     /// - Bitboards are in order White, Black, Pawn, Knight, Bishop, Rook, Queen, King.
     /// - Side-to-move is 0 for White, 1 for Black.
     /// - Score is White relative, in Centipawns.
