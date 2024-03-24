@@ -9,6 +9,7 @@ pub struct ChessBoard {
     result: u8,
     ksq: u8,
     opp_ksq: u8,
+    extra: [u8; 3],
 }
 
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
@@ -131,6 +132,7 @@ impl ChessBoard {
             result,
             ksq,
             opp_ksq,
+            extra: [0; 3],
         })
     }
 }
