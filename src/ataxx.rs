@@ -80,6 +80,10 @@ impl BulletFormat for AtaxxBoard {
     fn result_idx(&self) -> usize {
         usize::from(self.result)
     }
+
+    fn set_result(&mut self, result: f32) {
+        self.result = (2.0 * result) as u8;
+    }
 }
 
 impl IntoIterator for AtaxxBoard {
