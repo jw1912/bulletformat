@@ -18,6 +18,8 @@ pub use loader::DataLoader;
 pub trait BulletFormat: IntoIterator + Sized + Copy + Send + Sync {
     type FeatureType;
 
+    const HEADER_SIZE: usize;
+
     fn set_result(&mut self, result: f32);
 
     fn score(&self) -> i16;

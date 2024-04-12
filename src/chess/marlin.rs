@@ -67,6 +67,8 @@ impl MarlinFormat {
 impl BulletFormat for MarlinFormat {
     type FeatureType = (u8, u8);
 
+    const HEADER_SIZE: usize = 0;
+
     fn score(&self) -> i16 {
         if self.is_black_to_move() {
             -self.score

@@ -69,6 +69,8 @@ impl AtaxxBoard {
 impl BulletFormat for AtaxxBoard {
     type FeatureType = (u8, u8);
 
+    const HEADER_SIZE: usize = 0;
+
     fn score(&self) -> i16 {
         self.score
     }

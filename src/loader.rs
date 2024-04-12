@@ -1,11 +1,11 @@
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead, BufReader, Read},
     marker::PhantomData,
     path::Path,
 };
 
-use crate::util;
+use crate::{util, BulletFormat};
 
 pub struct DataLoader<T> {
     file: File,
@@ -13,7 +13,7 @@ pub struct DataLoader<T> {
     marker: PhantomData<T>,
 }
 
-impl<T> DataLoader<T> {
+impl<T: BulletFormat> DataLoader<T> {
     const DATA_SIZE: usize = std::mem::size_of::<T>();
 
     pub fn new(path: impl AsRef<Path>, buffer_size_mb: usize) -> io::Result<Self> {
@@ -25,7 +25,7 @@ impl<T> DataLoader<T> {
     }
 
     pub fn len(&self) -> usize {
-        self.file.metadata().unwrap().len() as usize / Self::DATA_SIZE
+        (self.file.metadata().unwrap().len() as usize - T::HEADER_SIZE) / Self::DATA_SIZE
     }
 
     pub fn is_empty(&self) -> bool {
@@ -37,6 +37,9 @@ impl<T> DataLoader<T> {
         let cap = Self::DATA_SIZE * batch_size * batches_per_load;
 
         let mut reader = BufReader::with_capacity(cap, self.file);
+
+        let mut header = vec![0; T::HEADER_SIZE];
+        reader.read_exact(&mut header).unwrap();
 
         while let Ok(buf) = reader.fill_buf() {
             if buf.is_empty() {
@@ -77,6 +80,10 @@ impl<T> DataLoader<T> {
 
         let dataloader = std::thread::spawn(move || {
             let mut file = BufReader::with_capacity(cap, self.file);
+
+            let mut header = vec![0; T::HEADER_SIZE];
+            file.read_exact(&mut header).unwrap();
+
             while let Ok(buf) = file.fill_buf() {
                 if buf.is_empty() {
                     break;

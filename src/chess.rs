@@ -23,6 +23,8 @@ const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
 impl BulletFormat for ChessBoard {
     type FeatureType = (u8, u8);
 
+    const HEADER_SIZE: usize = 0;
+
     fn score(&self) -> i16 {
         self.score
     }
