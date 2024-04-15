@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader, Read},
+    io::{self, Read},
     marker::PhantomData,
     path::Path,
 };
@@ -32,28 +32,28 @@ impl<T: BulletFormat> DataLoader<T> {
         self.len() == 0
     }
 
-    pub fn map_batches<F: FnMut(&[T])>(self, batch_size: usize, mut f: F) {
+    pub fn map_batches<F: FnMut(&[T])>(mut self, batch_size: usize, mut f: F) {
         let batches_per_load = self.buffer_size / Self::DATA_SIZE / batch_size;
         let cap = Self::DATA_SIZE * batch_size * batches_per_load;
 
-        let mut reader = BufReader::with_capacity(cap, self.file);
+        if T::HEADER_SIZE > 0 {
+            let mut header = vec![0; T::HEADER_SIZE];
+            self.file.read_exact(&mut header).unwrap();
+        }
 
-        let mut header = vec![0; T::HEADER_SIZE];
-        reader.read_exact(&mut header).unwrap();
+        let mut buffer = vec![0; cap];
+        loop {
+            let bytes_read = self.file.read(&mut buffer).unwrap();
 
-        while let Ok(buf) = reader.fill_buf() {
-            if buf.is_empty() {
+            if bytes_read == 0 {
                 break;
             }
 
-            let data = util::to_slice_with_lifetime(buf);
+            let data = util::to_slice_with_lifetime(&buffer[..bytes_read]);
 
             for batch in data.chunks(batch_size) {
                 f(batch);
             }
-
-            let consumed = buf.len();
-            reader.consume(consumed);
         }
     }
 
@@ -70,7 +70,7 @@ impl<T: BulletFormat> DataLoader<T> {
         });
     }
 
-    pub fn map_batches_threaded_loading<F: FnMut(&[T])>(self, batch_size: usize, mut f: F) {
+    pub fn map_batches_threaded_loading<F: FnMut(&[T])>(mut self, batch_size: usize, mut f: F) {
         use std::sync::mpsc::sync_channel;
 
         let batches_per_load = self.buffer_size / Self::DATA_SIZE / batch_size;
@@ -79,21 +79,20 @@ impl<T: BulletFormat> DataLoader<T> {
         let (sender, reciever) = sync_channel::<Vec<u8>>(2);
 
         let dataloader = std::thread::spawn(move || {
-            let mut file = BufReader::with_capacity(cap, self.file);
+            if T::HEADER_SIZE > 0 {
+                let mut header = vec![0; T::HEADER_SIZE];
+                self.file.read_exact(&mut header).unwrap();
+            }
 
-            let mut header = vec![0; T::HEADER_SIZE];
-            file.read_exact(&mut header).unwrap();
+            let mut buffer = vec![0; cap];
+            loop {
+                let bytes_read = self.file.read(&mut buffer).unwrap();
 
-            while let Ok(buf) = file.fill_buf() {
-                if buf.is_empty() {
+                if bytes_read == 0 {
                     break;
                 }
 
-                // do this better
-                sender.send(buf.to_vec()).unwrap();
-
-                let consumed = buf.len();
-                file.consume(consumed);
+                sender.send(buffer.to_vec()).unwrap();
             }
         });
 
