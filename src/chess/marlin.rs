@@ -121,6 +121,10 @@ impl From<MarlinFormat> for ChessBoard {
                 board.opp_ksq = square ^ 56;
             }
 
+            if piece & 0b111 == 0b110 {
+                piece ^= 0b100;
+            }
+
             features[fidx] = (piece, square);
             fidx += 1;
         }
