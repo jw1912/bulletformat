@@ -9,13 +9,13 @@ use crate::BulletFormat;
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ChessBoard {
-    occ: u64,
-    pcs: [u8; 16],
-    score: i16,
-    result: u8,
-    ksq: u8,
-    opp_ksq: u8,
-    extra: [u8; 3],
+    pub occ: u64,
+    pub pcs: [u8; 16],
+    pub score: i16,
+    pub result: u8,
+    pub ksq: u8,
+    pub opp_ksq: u8,
+    pub extra: [u8; 3],
 }
 
 const _RIGHT_SIZE: () = assert!(std::mem::size_of::<ChessBoard>() == 32);
