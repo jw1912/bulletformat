@@ -128,7 +128,7 @@ impl ChessBoard {
                 .iter()
                 .skip(2)
                 .position(|bb| bit & bb > 0)
-                .ok_or("No Piece Found!".to_string())?;
+                .ok_or("No Piece Found!")?;
 
             let pc = colour | piece as u8;
 
