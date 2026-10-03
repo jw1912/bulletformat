@@ -114,28 +114,70 @@ impl ChessBoard {
         }
 
         let occ = bbs[0] | bbs[1];
-        let mut pcs = [0; 16];
 
-        let mut idx = 0;
-        let mut occ2 = occ;
-        while occ2 > 0 {
-            let sq = occ2.trailing_zeros();
-            let bit = 1 << sq;
-            occ2 &= occ2 - 1;
+        #[cfg(not(target_feature = "avx512vbmi2"))]
+        let pcs = {
+            let mut pcs = [0; 16];
 
-            let colour = u8::from((bit & bbs[1]) > 0) << 3;
-            let piece = bbs
-                .iter()
-                .skip(2)
-                .position(|bb| bit & bb > 0)
-                .ok_or("No Piece Found!")?;
+            let mut idx = 0;
+            let mut occ2 = occ;
+            while occ2 > 0 {
+                let sq = occ2.trailing_zeros();
+                let bit = 1 << sq;
+                occ2 &= occ2 - 1;
 
-            let pc = colour | piece as u8;
+                let colour = u8::from((bit & bbs[1]) > 0) << 3;
+                let piece = bbs
+                    .iter()
+                    .skip(2)
+                    .position(|bb| bit & bb > 0)
+                    .ok_or("No Piece Found!")?;
 
-            pcs[idx / 2] |= pc << (4 * (idx & 1));
+                let pc = colour | piece as u8;
 
-            idx += 1;
-        }
+                pcs[idx / 2] |= pc << (4 * (idx & 1));
+
+                idx += 1;
+            }
+            pcs
+        };
+
+        #[cfg(target_feature = "avx512vbmi2")]
+        let pcs = unsafe {
+            use std::arch::x86_64::*;
+
+            let black = bbs[1];
+            let bbs = std::mem::transmute::<[u64; 8], __m512i>(bbs);
+
+            // Transpose u64x8 to u8x64
+            let bits = _mm512_gf2p8affine_epi64_epi8(
+                _mm512_set1_epi64(0x8040201008040201u64 as i64),
+                _mm512_permutexvar_epi8(
+                    _mm512_set_epi8(
+                        7, 15, 23, 31, 39, 47, 55, 63, 6, 14, 22, 30, 38, 46, 54, 62, 5, 13, 21,
+                        29, 37, 45, 53, 61, 4, 12, 20, 28, 36, 44, 52, 60, 3, 11, 19, 27, 35, 43,
+                        51, 59, 2, 10, 18, 26, 34, 42, 50, 58, 1, 9, 17, 25, 33, 41, 49, 57, 0, 8,
+                        16, 24, 32, 40, 48, 56,
+                    ),
+                    bbs,
+                ),
+                0,
+            );
+
+            // Convert from one-hot representation to piece indexes
+            let ptype_bits =
+                _mm512_srli_epi16(_mm512_and_si512(bits, _mm512_set1_epi8(0xFCu8 as i8)), 2);
+            let ptype = _mm512_popcnt_epi8(_mm512_sub_epi8(ptype_bits, _mm512_set1_epi8(1)));
+            let ptype = _mm512_mask_add_epi8(ptype, black, ptype, _mm512_set1_epi8(8));
+
+            // Extract only occupied squares
+            let compressed = _mm512_castsi512_si256(_mm512_maskz_compress_epi8(occ, ptype));
+
+            // Compress nibbles from u8x32 to u4x32
+            let y = _mm256_maddubs_epi16(compressed, _mm256_set1_epi16(0x1001));
+            let y = _mm_packus_epi16(_mm256_castsi256_si128(y), _mm256_extracti128_si256(y, 1));
+            std::mem::transmute::<__m128i, [u8; 16]>(y)
+        };
 
         let result = (2.0 * result) as u8;
         let ksq = (bbs[0] & bbs[7]).trailing_zeros() as u8;
@@ -245,4 +287,27 @@ impl std::str::FromStr for ChessBoard {
 
         Ok(board)
     }
+}
+
+#[test]
+fn from_raw_test() {
+    let bbs: [u64; 8] = [
+        0x91ff241018000000,
+        0x0000800200737d91,
+        0x00e7801208502d00,
+        0x0000040010220000,
+        0x0018000000014000,
+        0x8100000000000081,
+        0x0000200000001000,
+        0x1000000000000010,
+    ];
+    let board = ChessBoard::from_raw(bbs, 0, 0, 0.0).unwrap();
+    assert_eq!(board.occ, 0x91FFA41218737D91);
+    assert_eq!(
+        board.pcs,
+        [
+            0xDB, 0x8B, 0x88, 0x8C, 0xAA, 0x89, 0x89, 0x10, 0x8, 0x41, 0x8, 0x00, 0x22, 0x00, 0x30,
+            0x35
+        ]
+    );
 }
